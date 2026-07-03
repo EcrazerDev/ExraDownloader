@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Downloader - Télécharger Vidéos & Musiques</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap"
+    rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Background Decorative Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="logo-icon">
+          <path
+            d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.95 1.96C5.12 19.5 12 19.5 12 19.5s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"
+            fill="url(#gradient-red)" />
+          <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white" />
+          <defs>
+            <linearGradient id="gradient-red" x1="1" y1="4" x2="23" y2="19.5" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FF416C" />
+              <stop offset="1" stop-color="#FF4B2B" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <h1>Exra<span>Downloader</span></h1>
+      </div>
+      <p class="subtitle">Téléchargement haute qualité Sans Pubs</p>
+    </header>
+
+    <!-- Main Card -->
+    <main class="main-card">
+      <!-- Input Section -->
+      <section class="input-section">
+        <label for="url-input" class="input-label">Entrez une URL YouTube ou recherchez un titre</label>
+        <div class="input-group">
+          <input type="text" id="url-input" placeholder="Rechercher ou coller un lien YouTube..." autocomplete="off" />
+          <button id="analyse-btn" class="btn primary-btn">
+            <span>Analyser / Chercher</span>
+            <svg class="btn-spinner hidden" viewBox="0 0 50 50">
+              <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
+          </button>
+        </div>
+        <p id="error-message" class="error-text hidden"></p>
+      </section>
+
+      <!-- Search Results Section (Initially hidden) -->
+      <section id="search-section" class="search-section hidden">
+        <h3 class="search-section-title">Résultats de recherche</h3>
+        <div id="search-results-list" class="search-results-grid">
+          <!-- Dynamically populated search items -->
+        </div>
+      </section>
+
+      <!-- Preview Section (Initially hidden) -->
+      <section id="preview-section" class="preview-section hidden">
+        <div class="preview-content">
+          <div class="thumbnail-wrapper">
+            <img id="video-thumbnail" src="" alt="Miniature Vidéo" />
+            <span id="video-duration" class="badge duration-badge">00:00</span>
+          </div>
+          <div class="video-info">
+            <h2 id="video-title" class="video-title">Titre de la vidéo</h2>
+            <p id="video-channel" class="video-channel">Nom de la chaîne</p>
+
+            <div class="format-selector-container">
+              <button type="button" id="format-select-trigger" class="format-select-trigger-btn">
+                <span id="selected-format-label">.mp4 (Video - 1080p)</span>
+                <svg viewBox="0 0 24 24" class="arrow-icon" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              
+              <!-- Dropdown Panel -->
+              <div id="format-dropdown-panel" class="format-dropdown-panel hidden">
+                <div class="dropdown-search-wrapper">
+                  <svg viewBox="0 0 24 24" class="search-icon" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input type="text" id="format-search-input" placeholder="Format de recherche" autocomplete="off" />
+                </div>
+                
+                <div class="dropdown-tabs">
+                  <button type="button" class="tab-btn active" data-tab="video">Video</button>
+                  <button type="button" class="tab-btn" data-tab="audio">Audio</button>
+                </div>
+                
+                <div class="formats-grid" id="formats-grid">
+                  <button type="button" class="format-grid-item video-format" data-ext="mp4">.mp4</button>
+                  <button type="button" class="format-grid-item video-format" data-ext="mkv">.mkv</button>
+                  <button type="button" class="format-grid-item video-format" data-ext="avi">.avi</button>
+                  
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="mp3">.mp3</button>
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="flac">.flac</button>
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="wav">.wav</button>
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="ogg">.ogg</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Video Quality selector row -->
+            <div id="quality-selector-container" class="quality-selector-container">
+              <span class="quality-label">Qualité :</span>
+              <div class="quality-chips-grid" id="quality-chips-grid">
+                <button type="button" class="quality-chip" data-quality="2160">2160p (4K)</button>
+                <button type="button" class="quality-chip" data-quality="1440">1440p (2K)</button>
+                <button type="button" class="quality-chip active" data-quality="1080">1080p</button>
+                <button type="button" class="quality-chip" data-quality="720">720p</button>
+                <button type="button" class="quality-chip" data-quality="480">480p</button>
+                <button type="button" class="quality-chip" data-quality="360">360p</button>
+              </div>
+            </div>
+
+            <!-- Download Action Button -->
+            <button type="button" id="download-btn" class="btn primary-btn download-action-btn">
+              <span>Télécharger</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Playlist Preview Section (Initially hidden) -->
+      <section id="playlist-preview-section" class="playlist-preview-section hidden">
+        <div class="playlist-preview-header">
+          <div class="playlist-info-meta">
+            <h2 id="playlist-title" class="playlist-title">Titre de la Playlist</h2>
+            <p id="playlist-count" class="playlist-count">0 vidéos</p>
+          </div>
+          <div class="playlist-download-controls">
+            <div class="format-selector-container">
+              <button type="button" id="playlist-format-select-trigger" class="format-select-trigger-btn">
+                <span id="playlist-selected-format-label">.mp4 (Video - 1080p)</span>
+                <svg viewBox="0 0 24 24" class="arrow-icon" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              
+              <!-- Playlist Dropdown Panel -->
+              <div id="playlist-format-dropdown-panel" class="format-dropdown-panel hidden">
+                <div class="dropdown-search-wrapper">
+                  <svg viewBox="0 0 24 24" class="search-icon" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input type="text" id="playlist-format-search-input" placeholder="Format de recherche" autocomplete="off" />
+                </div>
+                
+                <div class="dropdown-tabs">
+                  <button type="button" class="tab-btn active" data-tab="video">Video</button>
+                  <button type="button" class="tab-btn" data-tab="audio">Audio</button>
+                </div>
+                
+                <div class="formats-grid" id="playlist-formats-grid">
+                  <button type="button" class="format-grid-item video-format" data-ext="mp4">.mp4</button>
+                  <button type="button" class="format-grid-item video-format" data-ext="mkv">.mkv</button>
+                  <button type="button" class="format-grid-item video-format" data-ext="avi">.avi</button>
+                  
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="mp3">.mp3</button>
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="flac">.flac</button>
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="wav">.wav</button>
+                  <button type="button" class="format-grid-item audio-format hidden" data-ext="ogg">.ogg</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Video Quality selector row for playlist -->
+            <div id="playlist-quality-selector-container" class="quality-selector-container">
+              <div class="quality-chips-grid" id="playlist-quality-chips-grid">
+                <button type="button" class="quality-chip" data-quality="2160">2160p</button>
+                <button type="button" class="quality-chip" data-quality="1440">1440p</button>
+                <button type="button" class="quality-chip active" data-quality="1080">1080p</button>
+                <button type="button" class="quality-chip" data-quality="720">720p</button>
+                <button type="button" class="quality-chip" data-quality="480">480p</button>
+                <button type="button" class="quality-chip" data-quality="360">360p</button>
+              </div>
+            </div>
+
+            <button type="button" id="playlist-download-btn" class="btn primary-btn download-action-btn compact-download-btn">
+              <span>Télécharger ZIP</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="playlist-selection-header">
+          <div class="select-all-wrapper">
+            <input type="checkbox" id="playlist-select-all" checked />
+            <label for="playlist-select-all">Tout sélectionner</label>
+          </div>
+          <span id="playlist-selected-count" class="playlist-selected-count">0 / 0 sélectionnées</span>
+        </div>
+
+        <div id="playlist-items-list" class="playlist-items-list">
+          <!-- Dynamically populated list of videos with checkboxes -->
+        </div>
+      </section>
+
+      <!-- Progress Section (Initially hidden) -->
+      <section id="progress-section" class="progress-section hidden">
+        <div class="progress-card">
+          <div class="progress-header">
+            <span id="progress-status" class="status-badge status-downloading">Téléchargement...</span>
+            <span id="progress-percent" class="progress-percent">0%</span>
+          </div>
+
+          <div id="playlist-progress-details" class="playlist-progress-details hidden">
+            <span id="playlist-progress-track-index" class="playlist-progress-track-index">Vidéo 0 / 0</span>
+            <span id="playlist-progress-track-title" class="playlist-progress-track-title">Titre de la vidéo</span>
+          </div>
+
+          <div class="progress-bar-container">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+
+          <div class="progress-meta">
+            <div class="meta-item">
+              <span class="meta-label">Vitesse :</span>
+              <span id="progress-speed" class="meta-value">0 KB/s</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Temps restant :</span>
+              <span id="progress-eta" class="meta-value">En attente</span>
+            </div>
+          </div>
+
+          <div id="conversion-info" class="conversion-info hidden">
+            <div class="mini-spinner"></div>
+            <span>Finalisation et conversion avec FFMPEG (cela peut prendre quelques secondes)...</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Réalisé avec Node.js, Express & yt-dlp</p>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+
+</html>
