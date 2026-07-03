@@ -78,8 +78,23 @@ function formatDuration(seconds) {
 
 // Endpoints
 // 1. Get video details
-function isYoutubeUrl(str) {
-  return str.includes('youtube.com') || str.includes('youtu.be');
+function isUrl(str) {
+  if (str.startsWith('http://') || str.startsWith('https://') || str.startsWith('www.')) {
+    return true;
+  }
+  const urlPattern = /^[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(\/\S*)?$/;
+  return urlPattern.test(str);
+}
+
+function getEntryThumbnail(entry) {
+  if (entry.thumbnail) return entry.thumbnail;
+  if (entry.thumbnails && entry.thumbnails.length) {
+    return entry.thumbnails[entry.thumbnails.length - 1].url;
+  }
+  if (entry.id && entry.id.length === 11 && !entry.id.includes(' ')) {
+    return `https://i.ytimg.com/vi/${entry.id}/hqdefault.jpg`;
+  }
+  return 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=360';
 }
 
 function extractFlatPlaylist(url) {
@@ -159,18 +174,20 @@ app.post('/api/info', (req, res) => {
     return res.status(400).json({ error: 'URL ou recherche requise' });
   }
 
-  if (!isYoutubeUrl(url)) {
+  let targetUrl = url.trim();
+
+  if (!isUrl(targetUrl)) {
     // Treat as search query
-    const searchQuery = `ytsearch10:${url}`;
+    const searchQuery = `ytsearch10:${targetUrl}`;
     extractFlatPlaylist(searchQuery)
       .then(entries => {
         const results = entries.map(entry => ({
           id: entry.id,
           title: entry.title,
-          thumbnail: `https://i.ytimg.com/vi/${entry.id}/hqdefault.jpg`,
+          thumbnail: getEntryThumbnail(entry),
           duration: formatDuration(entry.duration),
           uploader: entry.uploader || entry.channel || 'Inconnu',
-          url: `https://www.youtube.com/watch?v=${entry.id}`
+          url: entry.url || `https://www.youtube.com/watch?v=${entry.id}`
         }));
         res.json({
           type: 'search',
@@ -181,38 +198,48 @@ app.post('/api/info', (req, res) => {
         console.error('Search failed:', err);
         res.status(500).json({ error: 'La recherche a échoué ou n\'a retourné aucun résultat.' });
       });
-  } else if (url.includes('list=')) {
-    // Treat as playlist
-    extractFlatPlaylist(url)
-      .then(entries => {
-        if (entries.length === 0) {
-          throw new Error('Playlist vide ou introuvable');
-        }
-
-        const results = entries.map(entry => ({
-          id: entry.id,
-          title: entry.title,
-          thumbnail: `https://i.ytimg.com/vi/${entry.id}/hqdefault.jpg`,
-          duration: formatDuration(entry.duration),
-          uploader: entry.uploader || entry.channel || 'Inconnu',
-          url: `https://www.youtube.com/watch?v=${entry.id}`
-        }));
-
-        const playlistTitle = entries[0].playlist_title || entries[0].playlist || 'Playlist YouTube';
-
-        res.json({
-          type: 'playlist',
-          title: playlistTitle,
-          entries: results
-        });
-      })
-      .catch(err => {
-        console.error('Playlist extraction failed, falling back to single video:', err);
-        getSingleVideoInfo(url, res);
-      });
   } else {
-    // Single video URL
-    getSingleVideoInfo(url, res);
+    // Direct URL
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = 'https://' + targetUrl;
+    }
+
+    const isPlaylistUrl = targetUrl.includes('list=') || 
+                          targetUrl.includes('/sets/') || 
+                          targetUrl.includes('/album/') || 
+                          targetUrl.includes('/playlist/');
+
+    if (isPlaylistUrl) {
+      extractFlatPlaylist(targetUrl)
+        .then(entries => {
+          if (entries.length === 0) {
+            throw new Error('Playlist vide ou introuvable');
+          }
+
+          const results = entries.map(entry => ({
+            id: entry.id,
+            title: entry.title,
+            thumbnail: getEntryThumbnail(entry),
+            duration: formatDuration(entry.duration),
+            uploader: entry.uploader || entry.channel || 'Inconnu',
+            url: entry.url || `https://www.youtube.com/watch?v=${entry.id}`
+          }));
+
+          const playlistTitle = entries[0].playlist_title || entries[0].playlist || 'Playlist';
+
+          res.json({
+            type: 'playlist',
+            title: playlistTitle,
+            entries: results
+          });
+        })
+        .catch(err => {
+          console.error('Playlist extraction failed, falling back to single video:', err);
+          getSingleVideoInfo(targetUrl, res);
+        });
+    } else {
+      getSingleVideoInfo(targetUrl, res);
+    }
   }
 });
 
@@ -338,7 +365,7 @@ function zipDirectory(sourceDir, outPath) {
 
 function downloadSinglePlaylistEntry(downloadId, tempDir, entry, format, quality, downloadRecord) {
   return new Promise((resolve, reject) => {
-    const videoUrl = `https://www.youtube.com/watch?v=${entry.id}`;
+    const videoUrl = entry.url || `https://www.youtube.com/watch?v=${entry.id}`;
     const outputTemplate = path.join(tempDir, `${entry.id}.%(ext)s`);
     const args = buildYtDlpArgs(videoUrl, format, quality, outputTemplate);
 
