@@ -46,9 +46,11 @@
     <main class="main-card">
       <!-- Input Section -->
       <section class="input-section">
-        <label for="url-input" class="input-label">Entrez une URL YouTube ou recherchez un titre</label>
+        <label for="url-input" class="input-label">Entrez une URL YouTube, Soundcloud ou recherchez un
+          titre</label>
         <div class="input-group">
-          <input type="text" id="url-input" placeholder="Rechercher ou coller un lien YouTube..." autocomplete="off" />
+          <input type="text" id="url-input" placeholder="Rechercher ou coller un lien YouTube,Soundcloud..."
+            autocomplete="off" />
           <button id="analyse-btn" class="btn primary-btn">
             <span>Analyser / Chercher</span>
             <svg class="btn-spinner hidden" viewBox="0 0 50 50">
@@ -85,7 +87,7 @@
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </button>
-              
+
               <!-- Dropdown Panel -->
               <div id="format-dropdown-panel" class="format-dropdown-panel hidden">
                 <div class="dropdown-search-wrapper">
@@ -95,17 +97,17 @@
                   </svg>
                   <input type="text" id="format-search-input" placeholder="Format de recherche" autocomplete="off" />
                 </div>
-                
+
                 <div class="dropdown-tabs">
                   <button type="button" class="tab-btn active" data-tab="video">Video</button>
                   <button type="button" class="tab-btn" data-tab="audio">Audio</button>
                 </div>
-                
+
                 <div class="formats-grid" id="formats-grid">
                   <button type="button" class="format-grid-item video-format" data-ext="mp4">.mp4</button>
                   <button type="button" class="format-grid-item video-format" data-ext="mkv">.mkv</button>
                   <button type="button" class="format-grid-item video-format" data-ext="avi">.avi</button>
-                  
+
                   <button type="button" class="format-grid-item audio-format hidden" data-ext="mp3">.mp3</button>
                   <button type="button" class="format-grid-item audio-format hidden" data-ext="flac">.flac</button>
                   <button type="button" class="format-grid-item audio-format hidden" data-ext="wav">.wav</button>
@@ -150,7 +152,7 @@
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </button>
-              
+
               <!-- Playlist Dropdown Panel -->
               <div id="playlist-format-dropdown-panel" class="format-dropdown-panel hidden">
                 <div class="dropdown-search-wrapper">
@@ -158,19 +160,20 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
-                  <input type="text" id="playlist-format-search-input" placeholder="Format de recherche" autocomplete="off" />
+                  <input type="text" id="playlist-format-search-input" placeholder="Format de recherche"
+                    autocomplete="off" />
                 </div>
-                
+
                 <div class="dropdown-tabs">
                   <button type="button" class="tab-btn active" data-tab="video">Video</button>
                   <button type="button" class="tab-btn" data-tab="audio">Audio</button>
                 </div>
-                
+
                 <div class="formats-grid" id="playlist-formats-grid">
                   <button type="button" class="format-grid-item video-format" data-ext="mp4">.mp4</button>
                   <button type="button" class="format-grid-item video-format" data-ext="mkv">.mkv</button>
                   <button type="button" class="format-grid-item video-format" data-ext="avi">.avi</button>
-                  
+
                   <button type="button" class="format-grid-item audio-format hidden" data-ext="mp3">.mp3</button>
                   <button type="button" class="format-grid-item audio-format hidden" data-ext="flac">.flac</button>
                   <button type="button" class="format-grid-item audio-format hidden" data-ext="wav">.wav</button>
@@ -191,7 +194,8 @@
               </div>
             </div>
 
-            <button type="button" id="playlist-download-btn" class="btn primary-btn download-action-btn compact-download-btn">
+            <button type="button" id="playlist-download-btn"
+              class="btn primary-btn download-action-btn compact-download-btn">
               <span>Télécharger ZIP</span>
             </button>
           </div>
