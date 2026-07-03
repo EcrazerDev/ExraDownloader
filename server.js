@@ -31,6 +31,7 @@ function buildYtDlpArgs(url, format, quality, outputTemplate) {
     '--no-playlist',
     '--ffmpeg-location', ffmpegDir,
     '--js-runtimes', 'node',
+    '--remote-components', 'ejs:github',
     '-o', outputTemplate
   ];
 
@@ -100,7 +101,7 @@ function getEntryThumbnail(entry) {
 
 function extractFlatPlaylist(url) {
   return new Promise((resolve, reject) => {
-    const args = ['-m', 'yt_dlp', '--dump-json', '--flat-playlist', '--js-runtimes', 'node', url];
+    const args = ['-m', 'yt_dlp', '--dump-json', '--flat-playlist', '--js-runtimes', 'node', '--remote-components', 'ejs:github', url];
     const ytDlp = spawn('python', args);
 
     let stdoutData = '';
@@ -131,7 +132,7 @@ function extractFlatPlaylist(url) {
 }
 
 function getSingleVideoInfo(url, res) {
-  const args = ['-m', 'yt_dlp', '--dump-json', '--no-playlist', '--js-runtimes', 'node', url];
+  const args = ['-m', 'yt_dlp', '--dump-json', '--no-playlist', '--js-runtimes', 'node', '--remote-components', 'ejs:github', url];
   const ytDlp = spawn('python', args);
 
   let stdoutData = '';
