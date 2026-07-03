@@ -24,6 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Helpers
 const ffmpegDir = path.dirname(ffmpegPath);
+const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
 
 function buildYtDlpArgs(url, format, quality, outputTemplate) {
   const args = [
@@ -52,7 +53,7 @@ function buildYtDlpArgs(url, format, quality, outputTemplate) {
   } else if (videoFormats.includes(format)) {
     const resHeight = quality || '1080';
     args.push('-f', `bestvideo[height<=${resHeight}]+bestaudio/best[height<=${resHeight}]`);
-    
+
     if (format === 'mp4') {
       args.push('--merge-output-format', 'mp4');
     } else if (format === 'mkv') {
@@ -71,7 +72,7 @@ function formatDuration(seconds) {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   if (hrs > 0) {
     return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
@@ -102,7 +103,7 @@ function getEntryThumbnail(entry) {
 function extractFlatPlaylist(url) {
   return new Promise((resolve, reject) => {
     const args = ['-m', 'yt_dlp', '--dump-json', '--flat-playlist', '--js-runtimes', 'node', '--remote-components', 'ejs:github', url];
-    const ytDlp = spawn('python', args);
+    const ytDlp = spawn(pythonCommand, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     let stdoutData = '';
     let stderrData = '';
@@ -113,6 +114,10 @@ function extractFlatPlaylist(url) {
 
     ytDlp.stderr.on('data', (data) => {
       stderrData += data.toString();
+    });
+
+    ytDlp.on('error', (err) => {
+      reject(err);
     });
 
     ytDlp.on('close', (code) => {
@@ -133,7 +138,7 @@ function extractFlatPlaylist(url) {
 
 function getSingleVideoInfo(url, res) {
   const args = ['-m', 'yt_dlp', '--dump-json', '--no-playlist', '--js-runtimes', 'node', '--remote-components', 'ejs:github', url];
-  const ytDlp = spawn('python', args);
+  const ytDlp = spawn(pythonCommand, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
   let stdoutData = '';
   let stderrData = '';
@@ -144,6 +149,11 @@ function getSingleVideoInfo(url, res) {
 
   ytDlp.stderr.on('data', (data) => {
     stderrData += data.toString();
+  });
+
+  ytDlp.on('error', (err) => {
+    console.error(`Failed to start getSingleVideoInfo:`, err);
+    res.status(500).json({ error: `Erreur interne de lancement de l'extracteur : ${err.message}` });
   });
 
   ytDlp.on('close', (code) => {
@@ -206,10 +216,10 @@ app.post('/api/info', (req, res) => {
       targetUrl = 'https://' + targetUrl;
     }
 
-    const isPlaylistUrl = targetUrl.includes('list=') || 
-                          targetUrl.includes('/sets/') || 
-                          targetUrl.includes('/album/') || 
-                          targetUrl.includes('/playlist/');
+    const isPlaylistUrl = targetUrl.includes('list=') ||
+      targetUrl.includes('/sets/') ||
+      targetUrl.includes('/album/') ||
+      targetUrl.includes('/playlist/');
 
     if (isPlaylistUrl) {
       extractFlatPlaylist(targetUrl)
@@ -262,14 +272,14 @@ app.post('/api/download', (req, res) => {
   const id = uuidv4();
   const safeTitle = (title || 'video').replace(/[\\/:*?"<>|]/g, '_'); // Sanitization for filename
   const ext = format;
-  
+
   const outputTemplate = path.join(downloadsDir, `${id}.%(ext)s`);
   const args = buildYtDlpArgs(url, format, quality, outputTemplate);
 
   console.log(`Starting download ${id} with args:`, args);
 
   // Spawn download process
-  const child = spawn('python', args);
+  const child = spawn(pythonCommand, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
   // Create download record
   const downloadRecord = {
@@ -315,6 +325,13 @@ app.post('/api/download', (req, res) => {
 
   child.stderr.on('data', (data) => {
     console.error(`[yt-dlp stderr ${id}]:`, data.toString());
+  });
+
+  child.on('error', (err) => {
+    console.error(`[yt-dlp error ${id}]:`, err);
+    downloadRecord.status = 'failed';
+    downloadRecord.error = `Erreur de processus: ${err.message}`;
+    notifyClients(id);
   });
 
   child.on('close', (code) => {
@@ -371,7 +388,7 @@ function downloadSinglePlaylistEntry(downloadId, tempDir, entry, format, quality
     const outputTemplate = path.join(tempDir, `${entry.id}.%(ext)s`);
     const args = buildYtDlpArgs(videoUrl, format, quality, outputTemplate);
 
-    const child = spawn('python', args);
+    const child = spawn(pythonCommand, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     const progressRegex = /\[download\]\s+([\d.]+)%\s+of\s+(?:~)?([^\s]+)\s+at\s+([^\s]+)\s+ETA\s+([^\s]+)/;
     const postProcessRegex = /\[(ExtractAudio|Merger|ffmpeg|VideoConvertor)\]/;
@@ -392,6 +409,11 @@ function downloadSinglePlaylistEntry(downloadId, tempDir, entry, format, quality
           notifyClients(downloadId);
         }
       }
+    });
+
+    child.on('error', (err) => {
+      console.error(`[yt-dlp error ${downloadId}] on entry ${entry.id}:`, err);
+      reject(err);
     });
 
     child.on('close', (code) => {
@@ -538,7 +560,8 @@ app.get('/api/progress/:id', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
   });
 
   // Send initial state
