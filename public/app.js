@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentVideo = null;
   let currentPlaylist = null;
   let activeEventSource = null;
+  let pollingInterval = null;
 
   // Reusable helper to manage custom dropdown selectors
   function setupFormatDropdown({
@@ -446,11 +447,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Server-Sent Events listener for real-time download status
+  // Server-Sent Events listener with Polling Fallback
   function listenToProgress(id) {
-    if (activeEventSource) {
-      activeEventSource.close();
-    }
+    cleanupProgressListening();
 
     activeEventSource = new EventSource(`/api/progress/${id}`);
 
@@ -459,25 +458,68 @@ document.addEventListener('DOMContentLoaded', () => {
       updateProgressUI(data);
 
       if (data.status === 'completed') {
-        activeEventSource.close();
-        activeEventSource = null;
+        cleanupProgressListening();
         triggerFileDownload(id);
         setButtonsDisabled(false);
       } else if (data.status === 'failed') {
-        activeEventSource.close();
-        activeEventSource = null;
+        cleanupProgressListening();
         showDownloadError(data.error || 'Le téléchargement a échoué.');
         setButtonsDisabled(false);
       }
     };
 
     activeEventSource.onerror = (err) => {
-      console.error('SSE connection error:', err);
+      console.warn('SSE connection error, falling back to polling:', err);
+      cleanupProgressListening();
+      startPollingFallback(id);
+    };
+  }
+
+  function cleanupProgressListening() {
+    if (activeEventSource) {
       activeEventSource.close();
       activeEventSource = null;
+    }
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+    }
+  }
+
+  function startPollingFallback(id) {
+    if (pollingInterval) return; // Déjà en cours de polling
+
+    console.log('Starting polling fallback for download:', id);
+    
+    // Premier appel immédiat puis toutes les 2 secondes
+    pollStatus(id);
+    pollingInterval = setInterval(() => pollStatus(id), 2000);
+  }
+
+  async function pollStatus(id) {
+    try {
+      const response = await fetch(`/api/progress/${id}/poll`);
+      if (!response.ok) {
+        throw new Error('Erreur de réponse du serveur.');
+      }
+      const data = await response.json();
+      updateProgressUI(data);
+
+      if (data.status === 'completed') {
+        cleanupProgressListening();
+        triggerFileDownload(id);
+        setButtonsDisabled(false);
+      } else if (data.status === 'failed') {
+        cleanupProgressListening();
+        showDownloadError(data.error || 'Le téléchargement a échoué.');
+        setButtonsDisabled(false);
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+      cleanupProgressListening();
       showDownloadError('Connexion perdue avec le serveur de téléchargement.');
       setButtonsDisabled(false);
-    };
+    }
   }
 
   // Update UI components with state from SSE
@@ -518,17 +560,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Request browser file retrieval
+  // Request browser file retrieval using location.assign (more robust than synthetic click)
   function triggerFileDownload(id) {
-    const downloadUrl = `/api/retrieve/${id}`;
-    
-    // Create a hidden link and simulate click to prompt file download dialogue
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.location.assign(`/api/retrieve/${id}`);
   }
 
   // UI Helpers
@@ -606,10 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
     conversionInfo.classList.add('hidden');
     playlistProgressDetails.classList.add('hidden');
     
-    if (activeEventSource) {
-      activeEventSource.close();
-      activeEventSource = null;
-    }
+    cleanupProgressListening();
   }
 
   // Event Listeners
