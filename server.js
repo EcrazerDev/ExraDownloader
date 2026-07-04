@@ -574,6 +574,18 @@ app.get('/api/progress/:id', (req, res) => {
   });
 });
 
+// 3.b Polling Progress endpoint (fallback pour les proxys bloquant le SSE)
+app.get('/api/progress/:id/poll', (req, res) => {
+  const { id } = req.params;
+  const download = activeDownloads.get(id);
+
+  if (!download) {
+    return res.status(404).json({ error: 'Téléchargement introuvable' });
+  }
+
+  res.json(getSafeDownloadObject(download));
+});
+
 // 4. Retrieve downloaded file
 app.get('/api/retrieve/:id', (req, res) => {
   const { id } = req.params;
