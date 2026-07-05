@@ -620,20 +620,11 @@ body {
 
 .playlist-preview-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 24px;
-}
-
-@media (max-width: 600px) {
-  .playlist-preview-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .playlist-download-actions {
-    width: 100%;
-  }
+  width: 100%;
 }
 
 .playlist-info-meta {
@@ -1025,7 +1016,9 @@ body {
 .playlist-download-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
 .playlist-download-controls .format-selector-container {
